@@ -2,8 +2,6 @@
 
 A powerful, single-page dashboard to explore and discover trending GitHub repositories and AI skill-focused projects. The dashboard provides dual views: **Top Repos** (general trending repositories) and **Top Skills** (specialized AI instruction sets, prompt templates, and agent workflows), with filtering, sorting, and tagging capabilities.
 
-![GitHub Dashboard Screenshot](https://via.placeholder.com/800x400?text=GitHub+Dashboard+Preview) <!-- Add a real screenshot here -->
-
 ## ✨ Features
 
 -   **Dual Dashboard Views**
@@ -25,7 +23,7 @@ A powerful, single-page dashboard to explore and discover trending GitHub reposi
 
 You can access and use the dashboard directly from your browser. No build or installation is required.
 
-👉 **[Launch GitHub Dashboard](https://your-username.github.io/your-repo-name/)**  *(Replace with your actual GitHub Pages URL)*
+👉 **[Launch GitHub Dashboard](https://simhq.github.io/github-dashboard/)**  *(Replace with your actual GitHub Pages URL)*
 
 ## 🛠️ How to Use
 
