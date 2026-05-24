@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GitHub Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:         #F8FAFC;
+    --surface:    #FFFFFF;
+    --border:     #E2E8F0;
+    --border-2:   #F1F5F9;
+    --text:       #0F172A;
+    --text-muted: #64748B;
+    --text-subtle:#94A3B8;
+    --accent:     #2563EB;
+    --accent-h:   #1D4ED8;
+    --accent-sub: #EFF6FF;
+    --amber:      #92400E;
+    --tag-bg:     #EFF6FF;
+    --tag-text:   #1E40AF;
+    --chip-bg:    #F1F5F9;
+    --chip-act:   #0F172A;
+    --chip-act-t: #FFFFFF;
+    --radius:     6px;
+    --font:       'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  body { font-family:var(--font); background:var(--bg); color:var(--text); font-size:14px; line-height:1.5; min-height:100vh; -webkit-font-smoothing:antialiased; }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; color:var(--accent-h); }
+
+  /* ── HEADER ─────────────────────────────────────────────── */
+  .header { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; position:sticky; top:0; z-index:100; }
+  .header-inner { max-width:1280px; margin:0 auto; display:flex; align-items:center; gap:20px; height:52px; }
+  .logo { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; color:var(--text); white-space:nowrap; letter-spacing:-0.01em; }
+  .header-meta { display:flex; align-items:center; gap:12px; margin-left:auto; flex-wrap:wrap; }
+  .last-refresh { font-size:11px; color:var(--text-subtle); white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .token-wrap { display:flex; align-items:center; gap:6px; }
+  .token-label { font-size:12px; color:var(--text-muted); white-space:nowrap; font-weight:500; }
+  .token-wrap input { font-size:12px; padding:5px 10px; border:1px solid var(--border); border-radius:var(--radius); width:180px; outline:none; background:var(--bg); color:var(--text); transition:border-color .15s, box-shadow .15s; font-family:var(--font); }
+  .token-wrap input:focus { border-color:var(--accent); background:var(--surface); box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+  .btn { display:inline-flex; align-items:center; gap:6px; padding:5px 14px; border-radius:var(--radius); font-size:12px; font-weight:500; cursor:pointer; border:1px solid var(--border); background:var(--surface); color:var(--text); transition:background .15s, border-color .15s; white-space:nowrap; font-family:var(--font); }
+  .btn:hover { background:var(--bg); border-color:#CBD5E1; }
+  .btn-primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .btn-primary:hover { background:var(--accent-h); border-color:var(--accent-h); }
+  .btn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+  /* ── TAB BAR ─────────────────────────────────────────────── */
+  .tab-bar { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; }
+  .main-tabs { max-width:1280px; margin:0 auto; display:flex; }
+  .main-tab { padding:12px 18px; font-size:13px; font-weight:500; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .15s, border-color .15s; user-select:none; display:flex; align-items:center; gap:7px; white-space:nowrap; }
+  .main-tab:hover { color:var(--text); }
+  .main-tab.active { color:var(--text); border-bottom-color:var(--accent); font-weight:600; }
+  .main-tab:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+
+  /* ── PAGES ───────────────────────────────────────────────── */
+  .page { display:none; padding:28px 24px; max-width:1280px; margin:0 auto; }
+  .page.active { display:block; }
+  .section-header { margin-bottom:20px; }
+  .section-title { font-size:15px; font-weight:600; margin-bottom:3px; display:flex; align-items:center; gap:7px; letter-spacing:-0.01em; color:var(--text); }
+  .section-title svg { color:var(--text-muted); flex-shrink:0; }
+  .section-sub { font-size:12px; color:var(--text-muted); padding-left:21px; }
+
+  /* ── PERIOD + SORT ROW (Trending) ────────────────────────── */
+  .period-sort-row { display:flex; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+  .sub-tabs-inline { display:flex; gap:4px; flex-wrap:wrap; align-items:center; }
+  .period-divider { width:1px; height:18px; background:var(--border); flex-shrink:0; }
+  .sort-inline { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+
+  /* ── SUB TAB PILLS ───────────────────────────────────────── */
+  .sub-tab { padding:4px 14px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; background:transparent; color:var(--text-muted); border:1px solid var(--border); transition:all .15s; user-select:none; }
+  .sub-tab:hover { background:var(--chip-bg); color:var(--text); border-color:#CBD5E1; }
+  .sub-tab.active { background:var(--chip-act); color:var(--chip-act-t); border-color:var(--chip-act); }
+
+  /* ── SORT BUTTONS (pill style, used everywhere) ──────────── */
+  .sort-label { font-size:11px; color:var(--text-subtle); white-space:nowrap; font-weight:500; text-transform:uppercase; letter-spacing:.04em; }
+  .sort-btn { display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; background:transparent; color:var(--text-muted); border:1px solid var(--border); transition:all .15s; user-select:none; font-family:var(--font); white-space:nowrap; }
+  .sort-btn:hover { background:var(--chip-bg); color:var(--text); }
+  .sort-btn.active { background:var(--chip-act); color:var(--chip-act-t); border-color:var(--chip-act); }
+  .sort-btn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .sort-arrow { font-size:10px; opacity:.7; }
+
+  /* ── BANNERS ─────────────────────────────────────────────── */
+  .banner { display:none; padding:10px 14px; border-radius:var(--radius); font-size:12px; margin-bottom:16px; border:1px solid; align-items:center; gap:8px; line-height:1.5; }
+  .banner.warn { background:#FFFBEB; border-color:#FCD34D; color:#92400E; }
+  .banner.err  { background:#FEF2F2; border-color:#FCA5A5; color:#DC2626; }
+  .banner.info { background:var(--accent-sub); border-color:#BFDBFE; color:#1E40AF; }
+  .banner.show { display:flex; }
+
+  /* ── SPINNER ─────────────────────────────────────────────── */
+  .spinner-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:64px 20px; color:var(--text-subtle); font-size:12px; }
+  .spinner { width:24px; height:24px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* ── CONTROLS ROW (search + sort-inline) ─────────────────── */
+  .controls { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+  .search-wrap { position:relative; flex:1; min-width:180px; max-width:320px; }
+  .search-wrap svg { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-subtle); pointer-events:none; }
+  .search-input { width:100%; padding:6px 10px 6px 32px; border:1px solid var(--border); border-radius:var(--radius); font-size:12px; outline:none; background:var(--surface); color:var(--text); font-family:var(--font); transition:border-color .15s, box-shadow .15s; }
+  .search-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+
+  /* ── FILTER CHIPS ────────────────────────────────────────── */
+  .filter-chips { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:16px; align-items:center; }
+  .filter-label { font-size:11px; color:var(--text-subtle); margin-right:2px; white-space:nowrap; font-weight:500; text-transform:uppercase; letter-spacing:.04em; }
+  .chip { padding:3px 10px; border-radius:4px; font-size:11px; font-weight:500; cursor:pointer; background:var(--chip-bg); color:var(--text-muted); border:1px solid transparent; transition:all .15s; user-select:none; }
+  .chip:hover { background:#E2E8F0; color:var(--text); }
+  .chip.active { background:var(--chip-act); color:var(--chip-act-t); }
+
+  /* ── REPO CARDS ──────────────────────────────────────────── */
+  .repo-list { display:flex; flex-direction:column; gap:8px; }
+  .repo-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px 20px; transition:border-color .15s; }
+  .repo-card:hover { border-color:#CBD5E1; }
+  .repo-row-top { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+  .repo-main { flex:1; min-width:0; }
+  .repo-name-line { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px; }
+  .repo-owner { font-size:12px; color:var(--text-subtle); flex-shrink:0; }
+  .repo-name-link { font-size:14px; font-weight:600; color:var(--accent); letter-spacing:-0.01em; }
+  .repo-name-link:hover { text-decoration:underline; }
+  .repo-desc { font-size:12px; color:var(--text-muted); margin-bottom:10px; line-height:1.6; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .repo-meta { display:flex; align-items:center; flex-wrap:wrap; gap:14px; font-size:11px; color:var(--text-subtle); font-variant-numeric:tabular-nums; }
+  .repo-meta-item { display:flex; align-items:center; gap:4px; }
+  .lang-dot { width:8px; height:8px; border-radius:50%; display:inline-block; flex-shrink:0; }
+  .star-count { font-weight:600; color:var(--amber); }
+  .repo-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:10px; }
+  .tag { background:var(--accent-sub); color:var(--tag-text); border-radius:4px; padding:2px 8px; font-size:10px; font-weight:500; white-space:nowrap; }
+  .tag.lang { background:var(--chip-bg); color:var(--text-muted); }
+  .repo-rank { font-size:16px; font-weight:700; color:var(--border); min-width:28px; text-align:right; flex-shrink:0; padding-top:2px; font-variant-numeric:tabular-nums; letter-spacing:-0.02em; }
+
+  /* ── MISC ────────────────────────────────────────────────── */
+  .results-count { font-size:11px; color:var(--text-subtle); margin-bottom:12px; font-weight:500; text-transform:uppercase; letter-spacing:.04em; }
+  .empty-state { text-align:center; padding:56px 20px; color:var(--text-subtle); font-size:13px; }
+  .empty-state p { margin-top:8px; font-size:12px; }
+  .skill-badge { border-radius:4px; padding:1px 7px; font-size:10px; font-weight:600; white-space:nowrap; flex-shrink:0; letter-spacing:.03em; }
+  .info-note { background:var(--accent-sub); border:1px solid #BFDBFE; color:#1E40AF; border-radius:var(--radius); padding:12px 16px; font-size:12px; margin-bottom:20px; display:flex; align-items:flex-start; gap:10px; line-height:1.6; }
+  .info-note svg { flex-shrink:0; margin-top:1px; }
+  .info-note code { background:#DBEAFE; padding:1px 5px; border-radius:3px; font-size:10px; }
+
+  /* ── TAG FILTER DROPDOWN ───────────────────────────────────── */
+  .tag-filter { position:relative; margin-left:auto; }
+  .tag-filter-btn { display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; background:transparent; color:var(--text-muted); border:1px solid var(--border); transition:all .15s; user-select:none; font-family:var(--font); white-space:nowrap; }
+  .tag-filter-btn:hover { background:var(--chip-bg); color:var(--text); }
+  .tag-filter-btn.has-filter { background:var(--chip-act); color:var(--chip-act-t); border-color:var(--chip-act); }
+  .tag-dropdown { position:absolute; top:calc(100% + 6px); right:0; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:6px; min-width:190px; max-height:260px; overflow-y:auto; z-index:200; display:none; box-shadow:0 4px 16px rgba(0,0,0,.1); }
+  .tag-dropdown.open { display:block; }
+  .tag-dd-item { display:flex; align-items:center; gap:8px; padding:5px 6px; font-size:12px; cursor:pointer; border-radius:3px; user-select:none; color:var(--text-muted); }
+  .tag-dd-item:hover { background:var(--chip-bg); color:var(--text); }
+  .tag-dd-item input[type=checkbox] { cursor:pointer; width:13px; height:13px; accent-color:var(--accent); flex-shrink:0; }
+  .tag-dd-clear { width:100%; text-align:left; font-size:11px; color:var(--accent); background:none; border:none; cursor:pointer; padding:4px 6px; font-family:var(--font); border-bottom:1px solid var(--border-2); margin-bottom:4px; }
+  .tag-dd-clear:hover { text-decoration:underline; }
+
+  /* ── FOOTER ──────────────────────────────────────────────── */
+  .footer { text-align:center; padding:28px 24px; font-size:11px; color:var(--text-subtle); border-top:1px solid var(--border-2); margin-top:48px; }
+  .footer a { color:var(--text-muted); }
+  .footer a:hover { color:var(--text); text-decoration:none; }
+
+  /* ── RESPONSIVE ──────────────────────────────────────────── */
+  @media (max-width:768px) {
+    .period-divider { display:none; }
+    .period-sort-row { gap:8px; }
+  }
+  @media (max-width:640px) {
+    .header { padding:0 16px; }
+    .header-inner { height:auto; padding:10px 0; gap:8px; flex-wrap:wrap; }
+    .token-wrap input { width:130px; }
+    .repo-rank { display:none; }
+    .main-tab { padding:10px 12px; font-size:12px; }
+    .tab-bar { padding:0 16px; }
+    .page { padding:16px; }
+    .section-sub { padding-left:0; }
+    .controls { flex-direction:column; align-items:flex-start; }
+    .search-wrap { max-width:100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration:0ms !important; animation-duration:0ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub Dashboard
+    </div>
+    <div class="header-meta">
+      <span class="last-refresh" id="lastRefresh">Not yet loaded</span>
+      <div class="token-wrap">
+        <span class="token-label">PAT</span>
+        <input type="password" id="tokenInput" placeholder="ghp_… (optional)" title="GitHub Personal Access Token — stored in memory only." />
+      </div>
+      <button class="btn btn-primary" onclick="refreshAll()" aria-label="Refresh dashboard">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="tab-bar">
+  <div class="main-tabs" role="tablist">
+    <div class="main-tab active" data-tab="skills" onclick="switchTab('skills')" role="tab" aria-selected="true" tabindex="0">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278"/><path d="M10.273 2.513a.75.75 0 1 0-1.5.006l.01 2.996L7.282 6.01a.75.75 0 0 0 .978 1.14l1.733-1.485a.75.75 0 0 0 .257-.568l-.013-3.9q.002-.058.036-.684zM12.5 1a.75.75 0 0 1 .75.75v2.5h2.5a.75.75 0 0 1 0 1.5h-2.5v2.5a.75.75 0 0 1-1.5 0v-2.5H9.25a.75.75 0 0 1 0-1.5h2.5v-2.5A.75.75 0 0 1 12.5 1"/></svg>
+      Top Skills
+    </div>
+    <div class="main-tab" data-tab="trending" onclick="switchTab('trending')" role="tab" aria-selected="false" tabindex="0">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 0h1v15h15v1H0V0zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07z"/></svg>
+      Top Repos
+    </div>
+  </div>
+</div>
+
+<!-- ══ Tab 1: Top Repos ═════════════════════════════════════ -->
+<div id="page-trending" class="page" role="tabpanel">
+  <div class="section-header">
+    <div class="section-title">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 0h1v15h15v1H0V0zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07z"/></svg>
+      Top Repositories
+    </div>
+    <div class="section-sub">Most-starred repositories over the selected time period</div>
+  </div>
+  <div id="trending-banner" class="banner" role="alert"></div>
+
+  <!-- Search -->
+  <div class="controls" style="margin-bottom:14px">
+    <div class="search-wrap">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+      <input type="text" class="search-input" id="trendSearchInput" placeholder="Search repos…" oninput="renderTrending(S.period)" aria-label="Search repositories" />
+    </div>
+  </div>
+
+  <!-- Period tabs + Sort on same row -->
+  <div class="period-sort-row">
+    <div class="sub-tabs-inline">
+      <div class="sub-tab active" data-period="4m" onclick="switchPeriod('4m')">Last 4 Months</div>
+      <div class="sub-tab" data-period="1y" onclick="switchPeriod('1y')">Last 1 Year</div>
+      <div class="sub-tab" data-period="3yr" onclick="switchPeriod('3yr')">Last 3 Years</div>
+      <div class="sub-tab" data-period="alltime" onclick="switchPeriod('alltime')">All Time</div>
+    </div>
+    <div class="period-divider" aria-hidden="true"></div>
+    <div class="sort-inline">
+      <span class="sort-label">Sort</span>
+      <button class="sort-btn active" id="trendSortStars" onclick="setTrendSort('stars')">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.873 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>
+        Stars <span class="sort-arrow" id="trendArrowStars">↓</span>
+      </button>
+      <button class="sort-btn" id="trendSortCreated" onclick="setTrendSort('created')">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>
+        Date Created <span class="sort-arrow" id="trendArrowCreated">↓</span>
+      </button>
+    </div>
+    <div class="tag-filter" id="trendTagFilter">
+      <button class="tag-filter-btn" id="trendTagBtn" onclick="openTagDropdown('trend')">Filter ▾</button>
+      <div class="tag-dropdown" id="trendTagDropdown"></div>
+    </div>
+  </div>
+
+  <div id="trending-content">
+    <div class="spinner-wrap"><div class="spinner"></div><span>Loading trending repositories…</span></div>
+  </div>
+</div>
+
+<!-- ══ Tab 2: Top Skills ════════════════════════════════════ -->
+<div id="page-skills" class="page active" role="tabpanel">
+  <div class="section-header">
+    <div class="section-title">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278"/><path d="M10.273 2.513a.75.75 0 1 0-1.5.006l.01 2.996L7.282 6.01a.75.75 0 0 0 .978 1.14l1.733-1.485a.75.75 0 0 0 .257-.568l-.013-3.9q.002-.058.036-.684zM12.5 1a.75.75 0 0 1 .75.75v2.5h2.5a.75.75 0 0 1 0 1.5h-2.5v2.5a.75.75 0 0 1-1.5 0v-2.5H9.25a.75.75 0 0 1 0-1.5h2.5v-2.5A.75.75 0 0 1 12.5 1"/></svg>
+      Top Skills
+    </div>
+    <div class="section-sub">Most-starred repositories with reusable AI instruction sets, prompt templates, and agent workflows</div>
+  </div>
+  <div id="skills-banner" class="banner" role="alert"></div>
+  <div class="info-note">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/></svg>
+    <span>Aggregated from <strong>2 parallel GitHub searches</strong> — repos with <code>skill in:name and stars &gt; 500</code>, and repos with <code>skill in:description and stars &gt; 500</code> — then deduplicated and ranked by stars. Each card includes a <strong>relevance badge</strong> scoring how closely it matches the Claude-skill pattern.</span>
+  </div>
+  <!-- Search -->
+  <div class="controls" style="margin-bottom:14px">
+    <div class="search-wrap">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+      <input type="text" class="search-input" id="skillSearchInput" placeholder="Search skills…" oninput="applySkillFilters()" aria-label="Search AI skill repositories" />
+    </div>
+  </div>
+
+  <!-- Period tabs + Sort on same row -->
+  <div class="period-sort-row">
+    <div class="sub-tabs-inline">
+      <div class="sub-tab skill-sub-tab active" data-period="4m" onclick="switchSkillPeriod('4m')">Last 4 Months</div>
+      <div class="sub-tab skill-sub-tab" data-period="1y" onclick="switchSkillPeriod('1y')">Last 1 Year</div>
+      <div class="sub-tab skill-sub-tab" data-period="3yr" onclick="switchSkillPeriod('3yr')">Last 3 Years</div>
+      <div class="sub-tab skill-sub-tab" data-period="alltime" onclick="switchSkillPeriod('alltime')">All Time</div>
+    </div>
+    <div class="period-divider" aria-hidden="true"></div>
+    <div class="sort-inline">
+      <span class="sort-label">Sort</span>
+      <button class="sort-btn active" id="skillSortStars" onclick="setSkillSort('stars')">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.873 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>
+        Stars <span class="sort-arrow" id="skillArrowStars">↓</span>
+      </button>
+      <button class="sort-btn" id="skillSortRelevance" onclick="setSkillSort('relevance')">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1z"/></svg>
+        Relevance <span class="sort-arrow" id="skillArrowRelevance">↓</span>
+      </button>
+      <button class="sort-btn" id="skillSortCreated" onclick="setSkillSort('created')">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>
+        Date Created <span class="sort-arrow" id="skillArrowCreated">↓</span>
+      </button>
+    </div>
+    <div class="tag-filter" id="skillTagFilter">
+      <button class="tag-filter-btn" id="skillTagBtn" onclick="openTagDropdown('skill')">Filter ▾</button>
+      <div class="tag-dropdown" id="skillTagDropdown"></div>
+    </div>
+  </div>
+
+  <div id="skills-content">
+    <div class="spinner-wrap"><div class="spinner"></div><span>Searching for AI skill repositories…</span></div>
+  </div>
+</div>
+
+<footer class="footer">
+  Data from <a href="https://docs.github.com/en/rest" target="_blank" rel="noopener">GitHub REST API v3</a>
+  &nbsp;&middot;&nbsp;
+  Unauthenticated: 60 req/hr &nbsp;&middot;&nbsp; With PAT: 5,000 req/hr
+</footer>
+
+<script>
+/* ── STATE ──────────────────────────────────────────────────── */
+const S = {
+  period:'4m',
+  trending:{'4m':null,'1y':null,'3yr':null,'alltime':null},
+  trendLoading:{'4m':false,'1y':false,'3yr':false,'alltime':false},
+  trendSort:'stars', trendOrder:'desc',
+  trendCatFilter:new Set(),
+  skillSort:'stars', skillOrder:'desc',
+  skillPeriod:'4m',
+  skill:{'4m':null,'1y':null,'3yr':null,'alltime':null},
+  skillLoading:{'4m':false,'1y':false,'3yr':false,'alltime':false},
+  skillCatFilter:new Set(),
+  tab:'skills',
+};
+
+/* ── LANGUAGE COLORS ────────────────────────────────────────── */
+const LC={JavaScript:'#f1e05a',TypeScript:'#3178c6',Python:'#3572A5',Java:'#b07219','C++':'#f34b7d',C:'#555555','C#':'#178600',Go:'#00ADD8',Rust:'#dea584',Ruby:'#701516',PHP:'#4F5D95',Swift:'#F05138',Kotlin:'#A97BFF',Dart:'#00B4AB',Scala:'#c22d40',Shell:'#89e051',HTML:'#e34c26',CSS:'#563d7c',Vue:'#41b883',Svelte:'#ff3e00',Lua:'#000080',Haskell:'#5e5086',Elixir:'#6e4a7e',Clojure:'#db5855',R:'#198CE7',Julia:'#a270ba',MATLAB:'#e16737',Perl:'#0298c3',Vim:'#199f4b',Nix:'#7e7eff',Dockerfile:'#384d54','Jupyter Notebook':'#DA5B0B',OCaml:'#3be133',Zig:'#ec915c'};
+
+/* ── GENERAL CATEGORIES ─────────────────────────────────────── */
+const CAT_RULES=[
+  {cat:'AI / ML',tokens:['ai','ml','machine-learning','deep-learning','neural','llm','gpt','transformers','nlp','computer-vision','diffusion','stable-diffusion','pytorch','tensorflow','keras','langchain','rag','embedding','vector','chatbot','generative','openai','claude','anthropic','huggingface','llamaindex','autogpt']},
+  {cat:'Framework',tokens:['framework','react','vue','angular','svelte','nextjs','nuxt','django','flask','fastapi','rails','spring','laravel','express','nest','astro','remix','solid','qwik']},
+  {cat:'Dev Tool',tokens:['cli','tool','tooling','devtools','linter','formatter','bundler','compiler','debugger','testing','ci','cd','pipeline','deployment','docker','kubernetes','k8s','terraform','ansible','helm','prometheus','grafana','monitoring','logging','build']},
+  {cat:'Database',tokens:['database','db','sql','nosql','postgres','mysql','sqlite','redis','mongodb','elasticsearch','supabase','prisma','orm','drizzle','vector-database']},
+  {cat:'Security',tokens:['security','crypto','encryption','auth','authentication','authorization','oauth','jwt','vulnerability','pentest','hacking','ctf','malware','firewall','vpn','privacy','zero-knowledge']},
+  {cat:'Learning Resource',tokens:['awesome','tutorial','course','book','learn','guide','education','roadmap','interview','algorithms','data-structures','competitive-programming','cheatsheet','beginner','practice']},
+  {cat:'UI / Design',tokens:['ui','design','component','css','tailwind','animation','icon','theme','figma','sketch','svg','canvas','webgl','three','shader','ux','accessibility','a11y']},
+  {cat:'Mobile',tokens:['android','ios','mobile','flutter','react-native','swift','kotlin','expo','capacitor','ionic','cordova']},
+  {cat:'Systems',tokens:['os','operating-system','kernel','embedded','firmware','hardware','riscv','webassembly','wasm','bytecode','runtime','vm','virtual-machine','interpreter','jit','low-level','memory']},
+  {cat:'Data / Analytics',tokens:['data','analytics','visualization','pandas','spark','hadoop','etl','pipeline','dashboard','bi','jupyter','notebook','statistics','plotting','chart']},
+];
+function categorise(r){
+  const h=[r.name,r.description||'',r.language||'',...(r.topics||[])].join(' ').toLowerCase();
+  const c=CAT_RULES.filter(x=>x.tokens.some(t=>h.includes(t))).map(x=>x.cat);
+  return c.length?c:['Other'];
+}
+
+/* ── SKILL CATEGORIES ───────────────────────────────────────── */
+const SKILL_CAT_RULES=[
+  {cat:'Coding / Dev',tokens:['code','coding','developer','software','debug','refactor','test','review','typescript','python','javascript','git','commit','backend','frontend','api','sdk']},
+  {cat:'Writing / Content',tokens:['write','writing','content','blog','article','email','copy','draft','essay','story','creative','marketing','seo','document','newsletter','social','caption']},
+  {cat:'Data / Research',tokens:['data','research','analysis','analytics','report','insight','query','sql','spreadsheet','excel','csv','chart','visuali','scrape','dataset','statistic','summarize']},
+  {cat:'Design / UX',tokens:['design','ui','ux','figma','mockup','wireframe','prototype','layout','style','css','component','visual','interface','graphic','branding']},
+  {cat:'Productivity',tokens:['task','todo','plan','schedule','meeting','calendar','notes','productivity','project','manage','organis','organiz','reminder','inbox','workflow']},
+  {cat:'Agent / Automation',tokens:['agent','automation','automate','autonomous','pipeline','chain','crew','swarm','multi-agent','orchestrat','tool','mcp','plugin','agentic','action','bot','assistant']},
+  {cat:'Multimodal',tokens:['image','vision','audio','video','speech','ocr','screenshot','pdf','multimodal','photo','picture','media','voice','transcri']},
+  {cat:'Education',tokens:['learn','teach','tutor','quiz','explain','education','course','study','student','teacher','training','lesson','knowledge','exam']},
+];
+function skillCat(r){
+  const h=[r.name,r.description||'',r.language||'',...(r.topics||[])].join(' ').toLowerCase();
+  const c=SKILL_CAT_RULES.filter(x=>x.tokens.some(t=>h.includes(t))).map(x=>x.cat);
+  return c.length?c:['Other'];
+}
+
+/* ── SKILL SCORING & BADGE ──────────────────────────────────── */
+const STOKENS=['skill','skills','prompt','instruction','workflow','agent','tool','task','recipe','playbook','template','preset','plugin','mcp','assistant','persona','system-prompt'];
+function skillScore(r){
+  let s=0;
+  const n=r.name.toLowerCase(),d=(r.description||'').toLowerCase(),tp=(r.topics||[]).map(x=>x.toLowerCase());
+  STOKENS.forEach(t=>{if(n.includes(t))s+=3;if(d.includes(t))s+=1;if(tp.some(x=>x.includes(t)))s+=2;});
+  return s;
+}
+function skillBadge(s){
+  let label,bg,col;
+  if(s>=12){label='Core Skill';bg='#8250df18';col='#8250df';}
+  else if(s>=7){label='Strong Match';bg='#1a7f3718';col='#1a7f37';}
+  else if(s>=3){label='Skill-Adjacent';bg='#9a670018';col='#9a6700';}
+  else{label='Related';bg='#57606a18';col='#57606a';}
+  return '<span class="skill-badge" style="background:'+bg+';color:'+col+';border:1px solid '+col+'40;">'+label+'</span>';
+}
+
+/* ── API ────────────────────────────────────────────────────── */
+function ghHeaders(){const t=document.getElementById('tokenInput').value.trim();const h={'Accept':'application/vnd.github+json'};if(t)h['Authorization']='Bearer '+t;return h;}
+async function ghFetch(url){
+  const r=await fetch(url,{headers:ghHeaders()});
+  if(r.status===403){const b=await r.json().catch(()=>({}));throw{type:'ratelimit',message:b.message||'Rate limit exceeded.'};}
+  if(!r.ok)throw{type:'error',message:'API error '+r.status};
+  return r.json();
+}
+function isoDate(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);}
+
+/* ── RENDER HELPERS ─────────────────────────────────────────── */
+function fmt(n){if(n>=1e6)return(n/1e6).toFixed(1).replace(/\.0$/,'')+'M';if(n>=1e3)return(n/1e3).toFixed(1).replace(/\.0$/,'')+'k';return''+n;}
+function fmtD(s){return new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function langBadge(l){if(!l)return'';const c=LC[l]||'#888';return'<span class="repo-meta-item"><span class="lang-dot" style="background:'+c+'"></span>'+esc(l)+'</span>';}
+
+const STAR_I='<svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.873 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>';
+const CAL_I='<svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="opacity:.45;flex-shrink:0"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>';
+const UPD_I='<svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="opacity:.45;flex-shrink:0"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/></svg>';
+const EMPTY_I='<svg width="28" height="28" viewBox="0 0 16 16" fill="currentColor" style="opacity:.2"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>';
+
+function card(r,rank,badge){
+  const cats=(r._cats||[]).map(c=>'<span class="tag">'+esc(c)+'</span>').join('');
+  const topics=(r.topics||[]).slice(0,5).map(t=>'<span class="tag lang">'+esc(t)+'</span>').join('');
+  return '<div class="repo-card"><div class="repo-row-top"><div class="repo-main">'+
+    '<div class="repo-name-line"><span class="repo-owner">'+esc(r.owner.login)+' /</span>'+
+    '<a class="repo-name-link" href="'+esc(r.html_url)+'" target="_blank" rel="noopener">'+esc(r.name)+'</a>'+(badge||'')+
+    '</div><div class="repo-desc">'+(r.description?esc(r.description):'<em style="opacity:.4">No description</em>')+'</div>'+
+    '<div class="repo-meta">'+
+    '<span class="repo-meta-item star-count">'+STAR_I+' '+fmt(r.stargazers_count)+'</span>'+
+    '<span class="repo-meta-item">'+CAL_I+' '+fmtD(r.created_at)+'</span>'+
+    '</div><div class="repo-tags">'+cats+topics+'</div>'+
+    '</div><div class="repo-rank">#'+rank+'</div></div></div>';
+}
+
+function showBanner(id,type,msg){
+  const e=document.getElementById(id);
+  e.className='banner '+type+' show';
+  e.innerHTML='<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" style="flex-shrink:0" aria-hidden="true"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/></svg> '+msg;
+}
+function hideBanner(id){document.getElementById(id).className='banner';}
+
+/* ── TRENDING ───────────────────────────────────────────────── */
+const PD={'4m':120,'1y':365,'3yr':1095};
+async function loadTrending(p,force){
+  if(S.trendLoading[p])return;
+  if(S.trending[p]&&!force){renderTrending(p);return;}
+  S.trendLoading[p]=true;hideBanner('trending-banner');
+  if(S.period===p)document.getElementById('trending-content').innerHTML='<div class="spinner-wrap"><div class="spinner"></div><span>Fetching…</span></div>';
+  try{
+    let items;
+    if(p==='alltime'){
+      const d=await ghFetch('https://api.github.com/search/repositories?q=stars:>1&sort=stars&order=desc&per_page=100');
+      items=d.items||[];
+    } else if(p==='3yr'){
+      const urls=[
+        'https://api.github.com/search/repositories?q=created:'+isoDate(1095)+'..'+isoDate(730)+'&sort=stars&order=desc&per_page=100',
+        'https://api.github.com/search/repositories?q=created:'+isoDate(730)+'..'+isoDate(365)+'&sort=stars&order=desc&per_page=100',
+        'https://api.github.com/search/repositories?q=created:>'+isoDate(365)+'&sort=stars&order=desc&per_page=100',
+      ];
+      const results=await Promise.all(urls.map(u=>ghFetch(u)));
+      const seen=new Map();
+      results.forEach(r=>(r.items||[]).forEach(x=>{if(!seen.has(x.id))seen.set(x.id,x);}));
+      items=[...seen.values()].sort((a,b)=>b.stargazers_count-a.stargazers_count);
+    } else {
+      const url='https://api.github.com/search/repositories?q=created:>'+isoDate(PD[p])+'&sort=stars&order=desc&per_page=100';
+      const d=await ghFetch(url);
+      items=d.items||[];
+    }
+    S.trending[p]=items.map(r=>{r._cats=categorise(r);return r;});
+  }
+  catch(e){S.trending[p]=[];if(e.type==='ratelimit')showBanner('trending-banner','warn','Rate limit reached. Add a PAT or wait ~60 min.');else showBanner('trending-banner','err','Error: '+e.message);}
+  finally{S.trendLoading[p]=false;if(S.period===p){buildTagDropdown('trend',S.trending[p]||[],r=>r._cats,S.trendCatFilter);renderTrending(p);}}
+}
+
+function renderTrending(p){
+  const el=document.getElementById('trending-content');
+  const raw=S.trending[p];
+  if(!raw||!raw.length){el.innerHTML='<div class="empty-state">'+EMPTY_I+'<p>No repos found.</p></div>';return;}
+  const q=(document.getElementById('trendSearchInput')?.value||'').trim().toLowerCase();
+  const dir=S.trendOrder==='asc'?1:-1;
+  let rs=[...raw].sort((a,b)=>S.trendSort==='created'?dir*(new Date(a.created_at)-new Date(b.created_at)):dir*(a.stargazers_count-b.stargazers_count));
+  if(q)rs=rs.filter(r=>r.name.toLowerCase().includes(q)||(r.description||'').toLowerCase().includes(q)||r.owner.login.toLowerCase().includes(q));
+  if(S.trendCatFilter.size)rs=rs.filter(r=>(r._cats||[]).some(c=>S.trendCatFilter.has(c)));
+  if(!rs.length){el.innerHTML='<div class="results-count">0 repositories</div><div class="empty-state">'+EMPTY_I+'<p>No repos match your filters.</p></div>';return;}
+  el.innerHTML='<div class="results-count">'+rs.length+' repositor'+(rs.length===1?'y':'ies')+'</div><div class="repo-list">'+rs.map((r,i)=>card(r,i+1,'')).join('')+'</div>';
+}
+
+function setTrendSort(field){
+  if(S.trendSort===field){S.trendOrder=S.trendOrder==='desc'?'asc':'desc';}
+  else{S.trendSort=field;S.trendOrder='desc';}
+  updateTrendSortUI();
+  renderTrending(S.period);
+}
+function updateTrendSortUI(){
+  ['Stars','Created'].forEach(k=>{
+    const f=k==='Stars'?'stars':'created';
+    const btn=document.getElementById('trendSort'+k);
+    const arrow=document.getElementById('trendArrow'+k);
+    const isActive=S.trendSort===f;
+    if(btn)btn.classList.toggle('active',isActive);
+    if(arrow)arrow.textContent=isActive?(S.trendOrder==='desc'?'↓':'↑'):'↓';
+  });
+}
+function switchPeriod(p){
+  S.period=p;
+  S.trendCatFilter=new Set();
+  document.querySelectorAll('.sub-tab:not(.skill-sub-tab)').forEach(t=>t.classList.toggle('active',t.dataset.period===p));
+  if(S.trending[p]){buildTagDropdown('trend',S.trending[p],r=>r._cats,S.trendCatFilter);renderTrending(p);}else loadTrending(p);
+}
+
+
+const SKILL_PD={'4m':120,'1y':365,'3yr':1095};
+function skillQueries(p){
+  const df=p==='alltime'?'':'+created:>'+isoDate(SKILL_PD[p]);
+  return[
+    'https://api.github.com/search/repositories?q=skill+in:name+stars:>500'+df+'&sort=stars&order=desc&per_page=100',
+    'https://api.github.com/search/repositories?q=skill+in:description+stars:>500'+df+'&sort=stars&order=desc&per_page=100',
+  ];
+}
+async function loadSkills(p,force){
+  if(S.skillLoading[p])return;
+  if(S.skill[p]&&!force){applySkillFilters();return;}
+  S.skillLoading[p]=true;hideBanner('skills-banner');
+  if(S.skillPeriod===p)document.getElementById('skills-content').innerHTML='<div class="spinner-wrap"><div class="spinner"></div><span>Running 2 parallel skill searches…</span></div>';
+  try{
+    const results=await Promise.all(skillQueries(p).map(u=>ghFetch(u)));
+    const seen=new Map();
+    results.forEach(r=>(r.items||[]).forEach(x=>{if(!seen.has(x.id))seen.set(x.id,x);}));
+    const rs=[...seen.values()].map(r=>{r._cats=skillCat(r);r._score=skillScore(r);return r;});
+    rs.sort((a,b)=>b.stargazers_count-a.stargazers_count);
+    S.skill[p]=rs.slice(0,100);
+  }catch(e){
+    S.skill[p]=[];
+    if(e.type==='ratelimit')showBanner('skills-banner','warn','Rate limit reached. Add a PAT or wait ~60 min.');
+    else showBanner('skills-banner','err','Error: '+e.message);
+  }finally{S.skillLoading[p]=false;if(S.skillPeriod===p){buildTagDropdown('skill',S.skill[p]||[],r=>r._cats,S.skillCatFilter);applySkillFilters();}}
+}
+function switchSkillPeriod(p){
+  S.skillPeriod=p;
+  S.skillCatFilter=new Set();
+  document.querySelectorAll('.skill-sub-tab').forEach(t=>t.classList.toggle('active',t.dataset.period===p));
+  if(S.skill[p]){buildTagDropdown('skill',S.skill[p],r=>r._cats,S.skillCatFilter);applySkillFilters();}else loadSkills(p);
+}
+function applySkillFilters(){
+  const raw=S.skill[S.skillPeriod];
+  if(!raw)return;
+  const q=document.getElementById('skillSearchInput').value.trim().toLowerCase();
+  const dir=S.skillOrder==='asc'?1:-1;
+  let rs=raw.filter(r=>!q||r.name.toLowerCase().includes(q)||(r.description||'').toLowerCase().includes(q)||r.owner.login.toLowerCase().includes(q));
+  if(S.skillCatFilter.size)rs=rs.filter(r=>(r._cats||[]).some(c=>S.skillCatFilter.has(c)));
+  rs=[...rs].sort((a,b)=>
+    S.skillSort==='relevance'?dir*(a._score-b._score):
+    S.skillSort==='created'?dir*(new Date(a.created_at)-new Date(b.created_at)):
+    dir*(a.stargazers_count-b.stargazers_count)
+  );
+  const el=document.getElementById('skills-content');
+  if(!rs.length){el.innerHTML='<div class="results-count">0 repositories</div><div class="empty-state">'+EMPTY_I+'<p>No skill repos match your filters.</p></div>';return;}
+  el.innerHTML='<div class="results-count">'+rs.length+' repositor'+(rs.length===1?'y':'ies')+'</div><div class="repo-list">'+rs.map((r,i)=>card(r,i+1,skillBadge(r._score))).join('')+'</div>';
+}
+function setSkillSort(field){
+  if(S.skillSort===field){S.skillOrder=S.skillOrder==='desc'?'asc':'desc';}
+  else{S.skillSort=field;S.skillOrder='desc';}
+  updateSkillSortUI();
+  applySkillFilters();
+}
+function updateSkillSortUI(){
+  [['Stars','stars'],['Relevance','relevance'],['Created','created']].forEach(([k,f])=>{
+    const btn=document.getElementById('skillSort'+k);
+    const arrow=document.getElementById('skillArrow'+k);
+    const isActive=S.skillSort===f;
+    if(btn)btn.classList.toggle('active',isActive);
+    if(arrow)arrow.textContent=isActive?(S.skillOrder==='desc'?'↓':'↑'):'↓';
+  });
+}
+/* ── TAG FILTER DROPDOWN ────────────────────────────────────── */
+function buildTagDropdown(tab,data,getCats,filterSet){
+  const allCats=new Set();
+  data.forEach(r=>(getCats(r)||[]).forEach(c=>allCats.add(c)));
+  const dd=document.getElementById(tab+'TagDropdown');
+  if(!dd)return;
+  if(!allCats.size){dd.innerHTML='<div class="tag-dd-item" style="color:var(--text-subtle)">No tags available</div>';return;}
+  const toggleFn=tab==='trend'?'toggleTrendCat':'toggleSkillCat';
+  dd.innerHTML='<button class="tag-dd-clear" onclick="clearTagFilter(\''+tab+'\')">Clear all</button>'+
+    [...allCats].sort().map(c=>'<label class="tag-dd-item"><input type="checkbox"'+(filterSet.has(c)?' checked':'')+
+    ' onchange="'+toggleFn+'(\''+c.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\''+',this.checked)"> '+esc(c)+'</label>').join('');
+  updateTagBtn(tab,filterSet);
+}
+function updateTagBtn(tab,filterSet){
+  const btn=document.getElementById(tab+'TagBtn');
+  if(!btn)return;
+  const n=filterSet.size;
+  btn.textContent=n?'Filter ('+n+') ▾':'Filter ▾';
+  btn.classList.toggle('has-filter',n>0);
+}
+function openTagDropdown(tab){
+  const dd=document.getElementById(tab+'TagDropdown');
+  const wasOpen=dd.classList.contains('open');
+  document.querySelectorAll('.tag-dropdown').forEach(d=>d.classList.remove('open'));
+  if(!wasOpen){
+    dd.classList.add('open');
+    setTimeout(()=>{
+      document.addEventListener('click',function h(e){
+        if(!document.getElementById(tab+'TagFilter').contains(e.target)){
+          dd.classList.remove('open');
+          document.removeEventListener('click',h);
+        }
+      });
+    },0);
+  }
+}
+function toggleTrendCat(cat,checked){
+  if(checked)S.trendCatFilter.add(cat);else S.trendCatFilter.delete(cat);
+  updateTagBtn('trend',S.trendCatFilter);
+  renderTrending(S.period);
+}
+function toggleSkillCat(cat,checked){
+  if(checked)S.skillCatFilter.add(cat);else S.skillCatFilter.delete(cat);
+  updateTagBtn('skill',S.skillCatFilter);
+  applySkillFilters();
+}
+function clearTagFilter(tab){
+  if(tab==='trend'){S.trendCatFilter=new Set();updateTagBtn('trend',S.trendCatFilter);if(S.trending[S.period])buildTagDropdown('trend',S.trending[S.period],r=>r._cats,S.trendCatFilter);renderTrending(S.period);}
+  else{S.skillCatFilter=new Set();updateTagBtn('skill',S.skillCatFilter);if(S.skill[S.skillPeriod])buildTagDropdown('skill',S.skill[S.skillPeriod],r=>r._cats,S.skillCatFilter);applySkillFilters();}
+}
+
+function switchTab(t){
+  S.tab=t;
+  document.querySelectorAll('.main-tab').forEach(x=>{
+    const active=x.dataset.tab===t;
+    x.classList.toggle('active',active);
+    x.setAttribute('aria-selected',String(active));
+  });
+  document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id==='page-'+t));
+  if(t==='trending'&&!S.trending[S.period])loadTrending(S.period);
+  if(t==='skills'&&!S.skill[S.skillPeriod])loadSkills(S.skillPeriod);
+}
+function refreshAll(){
+  Object.keys(S.trending).forEach(p=>{S.trending[p]=null;});
+  Object.keys(S.skill).forEach(p=>{S.skill[p]=null;});
+  S.trendCatFilter=new Set();S.skillCatFilter=new Set();
+  if(S.tab==='trending')loadTrending(S.period,true);
+  else if(S.tab==='skills')loadSkills(S.skillPeriod,true);
+  updateTs();
+}
+function updateTs(){document.getElementById('lastRefresh').textContent='Refreshed '+new Date().toLocaleTimeString('en-SG',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+window.addEventListener('DOMContentLoaded',()=>{updateTs();loadSkills('4m');loadTrending('4m');});
+</script>
+</body>
+</html>
